@@ -797,12 +797,16 @@ def main():
 
     test_sets_cuts = multi_dataset.test_cuts()
 
-    test_sets = test_sets_cuts.keys()
+    # test_sets = test_sets_cuts.keys()
+    # test_dl = [
+    #     data_module.test_dataloaders(test_sets_cuts[cuts_name].filter(remove_short_utt))
+    #     for cuts_name in test_sets
+    # ]
+    test_sets = ["cx_test",]
     test_dl = [
-        data_module.test_dataloaders(test_sets_cuts[cuts_name].filter(remove_short_utt))
+        data_module.test_dataloaders(test_sets_cuts[cuts_name])
         for cuts_name in test_sets
     ]
-
     for test_set, test_dl in zip(test_sets, test_dl):
         logging.info(f"Start decoding test set: {test_set}")
 

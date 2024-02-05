@@ -116,7 +116,7 @@ def compute_fbank_wenetspeech_splits(args):
     set_audio_duration_mismatch_tolerance(0.01)  # 10ms tolerance
     set_caching_enabled(False)
     for i in range(start, stop):
-        idx = f"{i + 1}".zfill(num_digits)
+        idx = f"{i}".zfill(num_digits)
         logging.info(f"Processing {idx}/{num_splits}")
 
         cuts_path = output_dir / f"cuts_{subset}.{idx}.jsonl.gz"

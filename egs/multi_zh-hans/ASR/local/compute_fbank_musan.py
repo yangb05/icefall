@@ -17,22 +17,21 @@
 
 
 """
-This file computes fbank features of the aidatatang_200zh dataset.
+This file computes fbank features of the musan dataset.
 It looks for manifests in the directory data/manifests.
 
 The generated fbank features are saved in data/fbank.
 """
 
-import argparse
 import logging
 import os
 from pathlib import Path
 
 import torch
-from lhotse import LilcomChunkyWriter, CutSet, Fbank, FbankConfig
+from lhotse import CutSet, Fbank, FbankConfig, LilcomChunkyWriter, MonoCut, combine
 from lhotse.recipes.utils import read_manifests_if_cached
 
-from icefall.utils import get_executor, str2bool
+from icefall.utils import get_executor
 
 # Torch's multithreaded behavior needs to be disabled or
 # it wastes a lot of CPU and slow things down.
@@ -42,18 +41,22 @@ torch.set_num_threads(1)
 torch.set_num_interop_threads(1)
 
 
-def compute_fbank_aishell4(num_mel_bins: int = 80, perturb_speed: bool = False):
-    src_dir = Path("data/manifests/aishell4")
+def is_cut_long(c: MonoCut) -> bool:
+    return c.duration > 5
+
+
+def compute_fbank_musan():
+    src_dir = Path("data/manifests")
     output_dir = Path("data/fbank")
     num_jobs = min(15, os.cpu_count())
+    num_mel_bins = 80
 
     dataset_parts = (
-        "train_S",
-        "train_M",
-        "train_L",
-        "test",
+        "music",
+        "speech",
+        "noise",
     )
-    prefix = "aishell4"
+    prefix = "musan"
     suffix = "jsonl.gz"
     manifests = read_manifests_if_cached(
         dataset_parts=dataset_parts,
@@ -70,67 +73,37 @@ def compute_fbank_aishell4(num_mel_bins: int = 80, perturb_speed: bool = False):
         dataset_parts,
     )
 
+    musan_cuts_path = output_dir / "musan_cuts.jsonl.gz"
+
+    if musan_cuts_path.is_file():
+        logging.info(f"{musan_cuts_path} already exists - skipping")
+        return
+
+    logging.info("Extracting features for Musan")
+
     extractor = Fbank(FbankConfig(num_mel_bins=num_mel_bins))
 
     with get_executor() as ex:  # Initialize the executor only once.
-        for partition, m in manifests.items():
-            cuts_filename = f"{prefix}_cuts_{partition}.{suffix}"
-            if (output_dir / cuts_filename).is_file():
-                logging.info(f"{partition} already exists - skipping.")
-                continue
-            logging.info(f"Processing {partition}")
-            cut_set = CutSet.from_manifests(
-                recordings=m["recordings"],
-                supervisions=m["supervisions"],
+        # create chunks of Musan with duration 5 - 10 seconds
+        musan_cuts = (
+            CutSet.from_manifests(
+                recordings=combine(part["recordings"] for part in manifests.values())
             )
-            if "train" in partition and perturb_speed:
-                logging.info(f"Doing speed perturb")
-                cut_set = (
-                    cut_set + cut_set.perturb_speed(0.9) + cut_set.perturb_speed(1.1)
-                )
-
-            cut_set = cut_set.compute_and_store_features(
+            .cut_into_windows(10.0)
+            .filter(is_cut_long)
+            .compute_and_store_features(
                 extractor=extractor,
-                storage_path=f"{output_dir}/{prefix}_feats_{partition}",
-                # when an executor is specified, make more partitions
+                storage_path=f"{output_dir}/musan_feats",
                 num_jobs=num_jobs if ex is None else 80,
                 executor=ex,
                 storage_type=LilcomChunkyWriter,
             )
-
-            logging.info("About splitting cuts into smaller chunks")
-            cut_set = cut_set.trim_to_supervisions(
-                keep_overlapping=False,
-                min_duration=None,
-            )
-
-            cut_set.to_file(output_dir / cuts_filename)
-
-
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--num-mel-bins",
-        type=int,
-        default=80,
-        help="""The number of mel bins for Fbank""",
-    )
-    parser.add_argument(
-        "--perturb-speed",
-        type=str2bool,
-        default=False,
-        help="Enable 0.9 and 1.1 speed perturbation for data augmentation. Default: False.",
-    )
-
-    return parser.parse_args()
+        )
+        musan_cuts.to_file(musan_cuts_path)
 
 
 if __name__ == "__main__":
     formatter = "%(asctime)s %(levelname)s [%(filename)s:%(lineno)d] %(message)s"
 
     logging.basicConfig(format=formatter, level=logging.INFO)
-
-    args = get_args()
-    compute_fbank_aishell4(
-        num_mel_bins=args.num_mel_bins, perturb_speed=args.perturb_speed
-    )
+    compute_fbank_musan()

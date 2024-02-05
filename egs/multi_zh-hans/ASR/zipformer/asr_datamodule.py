@@ -105,7 +105,7 @@ class AsrDataModule:
         group.add_argument(
             "--num-buckets",
             type=int,
-            default=30,
+            default=50,
             help="The number of buckets for the DynamicBucketingSampler"
             "(you might want to increase it for larger datasets).",
         )
@@ -298,6 +298,8 @@ class AsrDataModule:
                 shuffle=self.args.shuffle,
                 num_buckets=self.args.num_buckets,
                 drop_last=self.args.drop_last,
+                buffer_size=self.args.num_buckets * 2000,
+                shuffle_buffer_size=self.args.num_buckets * 5000
             )
         else:
             logging.info("Using SimpleCutSampler.")

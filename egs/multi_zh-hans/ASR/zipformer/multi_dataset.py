@@ -37,7 +37,7 @@ class MultiDataset:
             - aishell4_cuts_train_L.jsonl.gz
             - aishell4_cuts_train_M.jsonl.gz
             - aishell4_cuts_train_S.jsonl.gz
-            - alimeeting-far_cuts_train.jsonl.gz
+            - alimeeting-sdm_cuts_train.jsonl.gz
             - magicdata_cuts_train.jsonl.gz
             - primewords_cuts_train.jsonl.gz
             - stcmds_cuts_train.jsonl.gz
@@ -106,7 +106,7 @@ class MultiDataset:
         # Ali-Meeting
         logging.info("Loading Ali-Meeting in lazy mode")
         alimeeting_cuts = load_manifest_lazy(
-            self.fbank_dir / "alimeeting-far_cuts_train.jsonl.gz"
+            self.fbank_dir / "alimeeting-sdm_cuts_train.jsonl.gz"
         )
 
         # WeNetSpeech
@@ -181,7 +181,7 @@ class MultiDataset:
         # Ali-Meeting
         logging.info("Loading Ali-Meeting DEV set in lazy mode")
         alimeeting_dev_cuts = load_manifest_lazy(
-            self.fbank_dir / "alimeeting-far_cuts_eval.jsonl.gz"
+            self.fbank_dir / "alimeeting-sdm_cuts_eval.jsonl.gz"
         )
 
         # MagicData
@@ -256,10 +256,10 @@ class MultiDataset:
         # Ali-Meeting
         logging.info("Loading Ali-Meeting set in lazy mode")
         alimeeting_test_cuts = load_manifest_lazy(
-            self.fbank_dir / "alimeeting-far_cuts_test.jsonl.gz"
+            self.fbank_dir / "alimeeting-sdm_cuts_test.jsonl.gz"
         )
         alimeeting_eval_cuts = load_manifest_lazy(
-            self.fbank_dir / "alimeeting-far_cuts_eval.jsonl.gz"
+            self.fbank_dir / "alimeeting-sdm_cuts_eval.jsonl.gz"
         )
 
         # MagicData
@@ -294,6 +294,10 @@ class MultiDataset:
         wenetspeech_dev_cuts = load_manifest_lazy(
             self.fbank_dir / "wenetspeech" / "cuts_DEV.jsonl.gz"
         )
+        
+        # 語音轉文字測試
+        logging.info("Loading 語音轉文字測試 in lazy mode")
+        cx_test_cuts =  load_manifest_lazy("/mgData1/yangb/data/語音轉文字測試/manifests/cx_cuts_test.jsonl.gz")
 
         return {
             "aidatatang_test": aidatatang_test_cuts,
@@ -313,4 +317,5 @@ class MultiDataset:
             "wenetspeech-meeting_test": wenetspeech_test_meeting_cuts,
             "wenetspeech-net_test": wenetspeech_test_net_cuts,
             "wenetspeech_dev": wenetspeech_dev_cuts,
+            "cx_test": cx_test_cuts,
         }

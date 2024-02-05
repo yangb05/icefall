@@ -110,14 +110,14 @@ def compute_fbank_kespeech_splits(args):
 
     device = torch.device("cpu")
     if torch.cuda.is_available():
-        device = torch.device("cuda", 0)
+        device = torch.device("cuda", 1)
     extractor = KaldifeatFbank(KaldifeatFbankConfig(device=device))
     logging.info(f"device: {device}")
 
     set_audio_duration_mismatch_tolerance(0.01)  # 10ms tolerance
     set_caching_enabled(False)
     for i in range(start, stop):
-        idx = f"{i + 1}".zfill(num_digits)
+        idx = f"{i}".zfill(num_digits)
         logging.info(f"Processing {idx}/{num_splits}")
 
         cuts_path = output_dir / f"kespeech-asr_cuts_{subset}.{idx}.jsonl.gz"

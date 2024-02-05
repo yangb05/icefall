@@ -55,66 +55,10 @@ if [ $stage -le 1 ] && [ $stop_stage -ge 1 ]; then
 fi
 
 if [ $stage -le 2 ] && [ $stop_stage -ge 2 ]; then
-  log "Stage 2: Prepare musan manifest"
-  # We assume that you have downloaded the musan corpus
-  # to data/musan
-  if [ ! -f data/manifests/.manifests.done ]; then
-    log "It may take 6 minutes"
-    mkdir -p data/manifests/
-    lhotse prepare musan $dl_dir/musan data/manifests/
-    touch data/manifests/.manifests.done
-  fi
-fi
-
-if [ $stage -le 3 ] && [ $stop_stage -ge 3 ]; then
-  log "Stage 3: Compute fbank for musan"
-  if [ ! -f data/fbank/.msuan.done ]; then
-    mkdir -p data/fbank
-    ./local/compute_fbank_musan.py
-    touch data/fbank/.msuan.done
-  fi
-fi
-
-if [ $stage -le 4 ] && [ $stop_stage -ge 4 ]; then
-  log "Stage 4: Compute fbank for aidatatang_200zh"
+  log "Stage 2: Compute fbank for aidatatang_200zh"
   if [ ! -f data/fbank/.aidatatang_200zh.done ]; then
     mkdir -p data/fbank
     ./local/compute_fbank_aidatatang_200zh.py --perturb-speed ${perturb_speed}
     touch data/fbank/.aidatatang_200zh.done
-  fi
-fi
-
-if [ $stage -le 5 ] && [ $stop_stage -ge 5 ]; then
-  log "Stage 5: Prepare char based lang"
-  lang_char_dir=data/lang_char
-  mkdir -p $lang_char_dir
-  # Prepare text.
-  # Note: in Linux, you can install jq with the following command:
-  # 1. wget -O jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
-  # 2. chmod +x ./jq
-  # 3. cp jq /usr/bin
-  if [ ! -f $lang_char_dir/text ]; then
-    gunzip -c data/manifests/aidatatang_200zh/aidatatang_supervisions_train.jsonl.gz \
-      |jq '.text' |sed -e 's/["text:\t ]*//g' | sed 's/"//g' \
-      | ./local/text2token.py -t "char" > $lang_char_dir/text
-  fi
-  # Prepare words.txt
-  if [ ! -f $lang_char_dir/text_words ]; then
-    gunzip -c data/manifests/aidatatang_200zh/aidatatang_supervisions_train.jsonl.gz \
-      | jq '.text' | sed -e 's/["text:\t]*//g' | sed 's/"//g' \
-      | ./local/text2token.py -t "char" > $lang_char_dir/text_words
-  fi
-
-  cat $lang_char_dir/text_words | sed 's/ /\n/g' | sort -u | sed '/^$/d' \
-    | uniq > $lang_char_dir/words_no_ids.txt
-
-  if [ ! -f $lang_char_dir/words.txt ]; then
-    ./local/prepare_words.py \
-      --input-file $lang_char_dir/words_no_ids.txt \
-      --output-file $lang_char_dir/words.txt
-  fi
-
-  if [ ! -f $lang_char_dir/L_disambig.pt ]; then
-    ./local/prepare_char.py
   fi
 fi

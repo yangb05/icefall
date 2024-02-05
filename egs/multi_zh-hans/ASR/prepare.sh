@@ -124,7 +124,7 @@ fi
 log "Dataset: ST-CMDS"
 if [ $stage -le 6 ] && [ $stop_stage -ge 6 ]; then
   log "Stage 6: Prepare ST-CMDS"
-  if [ ! -f $dl_dir/stcmds/ST-CMDS-20170001_1-OS.tar.gz ]; then
+  if [ ! -d $dl_dir/stcmds/ST-CMDS-20170001_1-OS ]; then
     log "Downloading ST-CMDS"
     lhotse download stcmds $dl_dir/stcmds
   fi
@@ -146,14 +146,14 @@ fi
 log "Dataset: Primewords"
 if [ $stage -le 7 ] && [ $stop_stage -ge 7 ]; then
   log "Stage 7: Prepare Primewords"
-  if [ ! -f $dl_dir/primewords/primewords_md_2018_set1.tar.gz ]; then
+  if [ ! -d $dl_dir/primewords/primewords_md_2018_set1 ]; then
     log "Downloading Primewords"
     lhotse download primewords $dl_dir/primewords
   fi
 
   if [ ! -f data/manifests/.stcmds.done ]; then
     mkdir -p data/manifests
-    lhotse prepare stcmds $dl_dir/primewords data/manifests/primewords
+    lhotse prepare primewords $dl_dir/primewords data/manifests/primewords
     touch data/manifests/.primewords.done
   fi
 
@@ -167,7 +167,7 @@ fi
 log "Dataset: MagicData"
 if [ $stage -le 8 ] && [ $stop_stage -ge 8 ]; then
   log "Stage 8: Prepare MagicData"
-  if [ ! -f $dl_dir/magicdata/train_set.tar.gz ]; then
+  if [ ! -d $dl_dir/magicdata/train ]; then
     log "Downloading MagicData"
     lhotse download magicdata $dl_dir/magicdata
   fi
@@ -274,7 +274,7 @@ if [ $stage -le 12 ] && [ $stop_stage -ge 12 ]; then
       touch data/fbank/.kespeech_preprocess_complete
     fi  
     
-    if [ -f data/fbank/.kespeech.train_phase1.split.${num_splits}.done ]; then
+    if [ ! -f data/fbank/.kespeech.train_phase1.split.${num_splits}.done ]; then
       log "Spliting KeSpeech train_phase1"
       lhotse split ${num_splits} \
         data/fbank/kespeech/kespeech-asr_cuts_train_phase1_raw.jsonl.gz \
@@ -282,7 +282,7 @@ if [ $stage -le 12 ] && [ $stop_stage -ge 12 ]; then
       touch data/fbank/.kespeech.train_phase1.split.${num_splits}.done
     fi
     
-    if [ -f data/fbank/.kespeech.train_phase2.split.${num_splits}.done ]; then
+    if [ ! -f data/fbank/.kespeech.train_phase2.split.${num_splits}.done ]; then
       log "Spliting KeSpeech train_phase2"
       lhotse split ${num_splits} \
         data/fbank/kespeech/kespeech-asr_cuts_train_phase2_raw.jsonl.gz \
@@ -298,6 +298,18 @@ if [ $stage -le 12 ] && [ $stop_stage -ge 12 ]; then
 
     log "Compute KeSpeech fbank for test/dev"
     ./local/compute_fbank_kespeech_dev_test.py
+
+    log "Combine features for train_phase1"
+    if [ ! -f data/fbank/kespeech/kespeech-asr_cuts_train_phase1.jsonl.gz ]; then
+      pieces=$(find data/fbank/kespeech/train_phase1_split_100 -name "kespeech-asr_cuts_train_phase1.*.jsonl.gz")
+      lhotse combine $pieces data/fbank/kespeech/kespeech-asr_cuts_train_phase1.jsonl.gz
+    fi
+
+    log "Combine features for train_phase2"
+    if [ ! -f data/fbank/kespeech/kespeech-asr_cuts_train_phase2.jsonl.gz ]; then
+      pieces=$(find data/fbank/kespeech/train_phase2_split_100 -name "kespeech-asr_cuts_train_phase2.*.jsonl.gz")
+      lhotse combine $pieces data/fbank/kespeech/kespeech-asr_cuts_train_phase2.jsonl.gz
+    fi
 
     touch data/fbank/.kespeech.done
   fi
