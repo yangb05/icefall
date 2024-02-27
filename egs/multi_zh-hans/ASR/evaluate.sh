@@ -1,6 +1,6 @@
 export CUDA_VISIBLE_DEVICES=1
-for epoch in 2; do
-  for avg in 1; do
+for epoch in 30 28 25 22 20 18; do
+  for avg in 15 10 8 5 2; do
     ./zipformer/streaming_decode.py \
         --epoch $epoch \
         --avg $avg \

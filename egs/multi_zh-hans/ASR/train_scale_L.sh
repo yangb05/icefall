@@ -7,6 +7,8 @@ export CUDA_VISIBLE_DEVICES="2,3,4,5,6,7"
   --world-size 6 \
   --use-fp16 1 \
   --causal 1 \
+  --start-epoch 31 \
+  --num-epochs 50 \
   --exp-dir zipformer/exp_scale_L_lr_epoch_3.5_fp16 \
   --bpe-model data/lang_bpe_2000/bpe.model \
   --keep-last-k 1 \
