@@ -1,0 +1,21 @@
+./zipformer/export-onnx-streaming.py \
+  --tokens ./data/lang_bpe_2000/tokens.txt \
+  --epoch 18 \
+  --avg 3 \
+  --exp-dir ./zipformer/exp_scale_280M_lr_epoch_3.5_fp16 \
+  --num-encoder-layers "2,2,4,5,4,2" \
+  --downsampling-factor "1,2,4,8,4,2" \
+  --feedforward-dim "512,1024,2048,3072,2048,1024" \
+  --num-heads "4,4,4,8,4,4" \
+  --encoder-dim "192,384,768,1024,768,384" \
+  --query-head-dim 32 \
+  --value-head-dim 12 \
+  --pos-head-dim 4 \
+  --pos-dim 48 \
+  --encoder-unmasked-dim "192,256,320,512,320,256" \
+  --cnn-module-kernel "31,31,15,15,15,31" \
+  --decoder-dim 512 \
+  --joiner-dim 512 \
+  --causal True \
+  --chunk-size 16 \
+  --left-context-frames 128

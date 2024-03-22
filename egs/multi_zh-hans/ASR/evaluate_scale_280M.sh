@@ -1,6 +1,6 @@
 export CUDA_VISIBLE_DEVICES=0
-for epoch in 20; do
-  for avg in 1; do
+for epoch in 13 15 18 20; do
+  for avg in 1 3 5 7; do
     ./zipformer/streaming_decode.py \
       --num-encoder-layers 2,2,4,5,4,2 \
       --feedforward-dim 512,1024,2048,3072,2048,1024 \
