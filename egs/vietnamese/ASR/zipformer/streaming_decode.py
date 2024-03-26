@@ -40,7 +40,7 @@ import k2
 import numpy as np
 import sentencepiece as spm
 import torch
-from asr_datamodule import ArabicAsrDataModule
+from asr_datamodule import VietnameseAsrDataModule
 from decode_stream import DecodeStream
 from kaldifeat import Fbank, FbankOptions
 from lhotse import CutSet
@@ -682,7 +682,7 @@ def save_results(
 @torch.no_grad()
 def main():
     parser = get_parser()
-    ArabicAsrDataModule.add_arguments(parser)
+    VietnameseAsrDataModule.add_arguments(parser)
     args = parser.parse_args()
     args.exp_dir = Path(args.exp_dir)
 
@@ -823,10 +823,10 @@ def main():
     num_param = sum([p.numel() for p in model.parameters()])
     logging.info(f"Number of model parameters: {num_param}")
 
-    arabic = ArabicAsrDataModule(args)
-    test_cuts = arabic.test_cuts()
+    viet = VietnameseAsrDataModule(args)
+    test_cuts = viet.test_cuts()
 
-    test_sets = ["mgb2_test"]
+    test_sets = ["test_25h"]
     test_cuts = [test_cuts]
 
     for test_set, test_cut in zip(test_sets, test_cuts):
