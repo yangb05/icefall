@@ -3,9 +3,10 @@ export CUDA_VISIBLE_DEVICES="2,3,4,5,6,7"
 ./zipformer/train.py \
   --world-size 6 \
   --use-fp16 1 \
-  --causal 1 \
-  --exp-dir zipformer/exp_lr_epoch_3.5_fp16_yodas_vi000 \
+  --exp-dir zipformer/exp_zipformer_60M_569h_offline \
   --bpe-model data/lang_bpe_10000/bpe.model \
   --keep-last-k 1 \
   --max-duration 1500 \
   --num-workers 20
+  
+  

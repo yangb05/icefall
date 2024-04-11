@@ -205,7 +205,7 @@ class VietnameseAsrDataModule:
         group.add_argument(
             "--add-vi000",
             type=str2bool,
-            default=True,
+            default=False,
             help="When enabled, mix yodas_vi000 with the original vietnamese.",
         )
 
@@ -399,16 +399,18 @@ class VietnameseAsrDataModule:
 
     @lru_cache()
     def train_cuts(self) -> CutSet:
-        logging.info("Loading vietnamese in lazy mode")
+        logging.info("Loading yodas_vi000 in lazy mode")
         viet_cuts = load_manifest_lazy(
-            self.args.manifest_dir / "vietnamese_cuts_train.jsonl.gz"
+            self.args.manifest_dir / "yodas_cuts_vi000.jsonl.gz"
         )
         if self.args.add_vi000:
             logging.info("Loading yodas_vi000 in lazy mode")
             vi000_cuts = load_manifest_lazy(
             self.args.manifest_dir / "yodas_cuts_vi000.jsonl.gz"
         )
-        return CutSet.mux(viet_cuts, vi000_cuts)
+            return CutSet.mux(viet_cuts, vi000_cuts, weights=[len(viet_cuts), len(vi000_cuts)])
+        else:
+            return viet_cuts
         
 
     @lru_cache()

@@ -75,7 +75,7 @@ def compute_fbank_vietnamese(
     num_workers = 20
     # number of seconds in a batch
     batch_duration = 600
-    subsets = ("dev", "test")
+    subsets = ("train",)
     if bpe_model:
         logging.info(f"Loading {bpe_model}")
         sp = spm.SentencePieceProcessor()
@@ -107,13 +107,17 @@ def compute_fbank_vietnamese(
     
     for partition in subsets:
         cuts_path = output_dir / f"{prefix}_cuts_{partition}.{suffix}"
-        if cuts_path.is_file():
-            logging.info(f"{cuts_path} exists - skipping")
-            continue
+        # if cuts_path.is_file():
+        #     logging.info(f"{cuts_path} exists - skipping")
+        #     continue
         cut_set = CutSet.from_manifests(
             recordings=manifests[partition]["recordings"],
             supervisions=manifests[partition]["supervisions"],
         )
+        # extract 284h from 2277h data
+        # shuffled = cut_set.shuffle()
+        # cut_set = shuffled.split(num_splits=8)[0]
+        
         if "train" in partition:
             print(cut_set.describe())
             if bpe_model:
