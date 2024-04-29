@@ -76,8 +76,8 @@ def compute_fbank_librispeech(
     dataset: Optional[str] = None,
     perturb_speed: Optional[bool] = True,
 ):
-    src_dir = Path("data/manifests")
-    output_dir = Path("data/fbank")
+    src_dir = Path("/data_a100/userhome/yangb/data/manifests")
+    output_dir = Path("/data_a100/userhome/yangb/data/fbank")
     num_jobs = min(15, os.cpu_count())
     num_mel_bins = 80
 

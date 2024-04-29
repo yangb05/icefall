@@ -36,7 +36,7 @@ stop_stage=100
 #     - music
 #     - noise
 #     - speech
-dl_dir=$PWD/download
+dl_dir=/data_a100/userhome/yangb/download
 
 . shared/parse_options.sh || exit 1
 
@@ -99,7 +99,7 @@ if [ $stage -le 1 ] && [ $stop_stage -ge 1 ]; then
   # to $dl_dir/LibriSpeech
   mkdir -p data/manifests
   if [ ! -e data/manifests/.librispeech.done ]; then
-    lhotse prepare librispeech -j $nj $dl_dir/LibriSpeech data/manifests
+    lhotse prepare librispeech -j $nj $dl_dir/LibriSpeech /data_a100/userhome/yangb/data/manifests
     touch data/manifests/.librispeech.done
   fi
 fi
@@ -117,21 +117,20 @@ fi
 
 if [ $stage -le 3 ] && [ $stop_stage -ge 3 ]; then
   log "Stage 3: Compute fbank for librispeech"
-  mkdir -p data/fbank
-  if [ ! -e data/fbank/.librispeech.done ]; then
-    ./local/compute_fbank_librispeech.py
-    touch data/fbank/.librispeech.done
+  if [ ! -e /data_a100/userhome/yangb/data/fbank/.librispeech.done ]; then
+    ./local/compute_fbank_librispeech.py --perturb-speed False
+    touch /data_a100/userhome/yangb/data/fbank/.librispeech.done
   fi
 
-  if [ ! -f data/fbank/librispeech_cuts_train-all-shuf.jsonl.gz ]; then
-    cat <(gunzip -c data/fbank/librispeech_cuts_train-clean-100.jsonl.gz) \
-      <(gunzip -c data/fbank/librispeech_cuts_train-clean-360.jsonl.gz) \
-      <(gunzip -c data/fbank/librispeech_cuts_train-other-500.jsonl.gz) | \
-      shuf | gzip -c > data/fbank/librispeech_cuts_train-all-shuf.jsonl.gz
+  if [ ! -f /data_a100/userhome/yangb/data/fbank/librispeech_cuts_train-all-shuf.jsonl.gz ]; then
+    cat <(gunzip -c /data_a100/userhome/yangb/data/fbank/librispeech_cuts_train-clean-100.jsonl.gz) \
+      <(gunzip -c /data_a100/userhome/yangb/data/fbank/librispeech_cuts_train-clean-360.jsonl.gz) \
+      <(gunzip -c /data_a100/userhome/yangb/data/fbank/librispeech_cuts_train-other-500.jsonl.gz) | \
+      shuf | gzip -c > /data_a100/userhome/yangb/data/fbank/librispeech_cuts_train-all-shuf.jsonl.gz
   fi
 
-  if [ ! -e data/fbank/.librispeech-validated.done ]; then
-    log "Validating data/fbank for LibriSpeech"
+  if [ ! -e /data_a100/userhome/yangb/data/fbank/.librispeech-validated.done ]; then
+    log "Validating /data_a100/userhome/yangb/data/fbank for LibriSpeech"
     parts=(
       train-clean-100
       train-clean-360
@@ -143,9 +142,9 @@ if [ $stage -le 3 ] && [ $stop_stage -ge 3 ]; then
     )
     for part in ${parts[@]}; do
       python3 ./local/validate_manifest.py \
-        data/fbank/librispeech_cuts_${part}.jsonl.gz
+        /data_a100/userhome/yangb/data/fbank/librispeech_cuts_${part}.jsonl.gz
     done
-    touch data/fbank/.librispeech-validated.done
+    touch /data_a100/userhome/yangb/data/fbank/.librispeech-validated.done
   fi
 fi
 

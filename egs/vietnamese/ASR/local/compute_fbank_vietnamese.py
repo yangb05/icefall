@@ -106,10 +106,10 @@ def compute_fbank_vietnamese(
     )
     
     for partition in subsets:
-        cuts_path = output_dir / f"{prefix}_cuts_{partition}.{suffix}"
-        # if cuts_path.is_file():
-        #     logging.info(f"{cuts_path} exists - skipping")
-        #     continue
+        cuts_path = output_dir / f"{prefix}_cuts_{partition}_no_perturb.{suffix}"
+        if cuts_path.is_file():
+            logging.info(f"{cuts_path} exists - skipping")
+            continue
         cut_set = CutSet.from_manifests(
             recordings=manifests[partition]["recordings"],
             supervisions=manifests[partition]["supervisions"],

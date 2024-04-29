@@ -15,36 +15,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Usage:
-(1) use the checkpoint exp_dir/epoch-xxx.pt
-./zipformer/generate_averaged_model.py \
-    --epoch 28 \
-    --avg 15 \
-    --exp-dir ./zipformer/exp
-
-It will generate a file `epoch-28-avg-15.pt` in the given `exp_dir`.
-You can later load it by `torch.load("epoch-28-avg-15.pt")`.
-
-(2) use the checkpoint exp_dir/checkpoint-iter.pt
-./zipformer/generate_averaged_model.py \
-    --iter 22000 \
-    --avg 5 \
-    --exp-dir ./zipformer/exp
-
-It will generate a file `iter-22000-avg-5.pt` in the given `exp_dir`.
-You can later load it by `torch.load("iter-22000-avg-5.pt")`.
-"""
 
 
 import argparse
 from pathlib import Path
 
-import k2
+
 import torch
+from tqdm import tqdm
+import numpy as np
 from train import add_model_arguments, get_model, get_params
 import sentencepiece as spm
 from icefall.checkpoint import average_checkpoints_with_averaged_model, find_checkpoints
+from lhotse import CutSet
 
 
 def get_parser():
@@ -55,7 +38,7 @@ def get_parser():
     parser.add_argument(
         "--epoch",
         type=int,
-        default=30,
+        default=15,
         help="""It specifies the checkpoint to use for decoding.
         Note: Epoch counts from 1.
         You can specify --avg to use more checkpoints for model averaging.""",
@@ -74,7 +57,7 @@ def get_parser():
     parser.add_argument(
         "--avg",
         type=int,
-        default=9,
+        default=5,
         help="Number of checkpoints to average. Automatically select "
         "consecutive checkpoints before the checkpoint specified by "
         "'--epoch' and '--iter'",
@@ -83,14 +66,14 @@ def get_parser():
     parser.add_argument(
         "--exp-dir",
         type=str,
-        default="zipformer/exp",
+        default="/data_a100/userhome/yangb/data/checkpoints/vietnamese_ASR/exp_zipformer_60M_2200h_offline",
         help="The experiment dir",
     )
 
     parser.add_argument(
         "--bpe-model",
         type=str,
-        default="data/lang_bpe_10000/bpe.model",
+        default="/mgData2/yangb/icefall/egs/vietnamese/ASR/data/lang_bpe_10000/bpe.model",
         help="Path to the bpe model",
     )
 
@@ -100,35 +83,41 @@ def get_parser():
         default=2,
         help="The context size in the decoder. 1 means bigram; 2 means tri-gram",
     )
+    
+    parser.add_argument(
+        "--cut-file",
+        type=str,
+        default="/mgData2/yangb/icefall-ssl/egs/gigaspeech2/SSL/data/fbank/musan_cuts.jsonl.gz",
+        help="The context size in the decoder. 1 means bigram; 2 means tri-gram",
+    )
+    
+    parser.add_argument(
+        "--embed-file",
+        type=str,
+        default="/mgData2/yangb/icefall-ssl/egs/gigaspeech2/SSL/data/fbank/musan_embed.npy",
+        help="The context size in the decoder. 1 means bigram; 2 means tri-gram",
+    )
 
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda",
+        help="The device",
+    )
+    
     add_model_arguments(parser)
 
     return parser
 
 
 @torch.no_grad()
-def main():
-    parser = get_parser()
-    args = parser.parse_args()
-    args.exp_dir = Path(args.exp_dir)
-
-    params = get_params()
-    params.update(vars(args))
-
+def load_model(params):
     if params.iter > 0:
         params.suffix = f"iter-{params.iter}-avg-{params.avg}"
     else:
         params.suffix = f"epoch-{params.epoch}-avg-{params.avg}"
 
     print("Script started")
-
-    device = torch.device("cpu")
-    print(f"Device: {device}")
-
-    # symbol_table = k2.SymbolTable.from_file(params.tokens)
-    # params.blank_id = symbol_table["<blk>"]
-    # params.unk_id = symbol_table["<unk>"]
-    # params.vocab_size = len(symbol_table)
     sp = spm.SentencePieceProcessor()
     sp.load(params.bpe_model)
     params.blank_id = sp.piece_to_id("<blk>")
@@ -157,16 +146,12 @@ def main():
             "Calculating the averaged model over iteration checkpoints"
             f" from {filename_start} (excluded) to {filename_end}"
         )
-        model.to(device)
         model.load_state_dict(
             average_checkpoints_with_averaged_model(
                 filename_start=filename_start,
                 filename_end=filename_end,
-                device=device,
             )
         )
-        filename = params.exp_dir / f"iter-{params.iter}-avg-{params.avg}.pt"
-        torch.save({"model": model.state_dict()}, filename)
     else:
         assert params.avg > 0, params.avg
         start = params.epoch - params.avg
@@ -177,22 +162,44 @@ def main():
             f"Calculating the averaged model over epoch range from "
             f"{start} (excluded) to {params.epoch}"
         )
-        model.to(device)
         model.load_state_dict(
             average_checkpoints_with_averaged_model(
                 filename_start=filename_start,
                 filename_end=filename_end,
-                device=device,
             )
         )
-        filename = params.exp_dir / f"epoch-{params.epoch}-avg-{params.avg}.pt"
-        torch.save({"model": model.state_dict()}, filename)
 
     num_param = sum([p.numel() for p in model.parameters()])
     print(f"Number of model parameters: {num_param}")
+    print("Loading model Done!")
+    return model
+        
 
-    print("Done!")
+def run():
+    parser = get_parser()
+    args = parser.parse_args()
+    args.exp_dir = Path(args.exp_dir)
+    params = get_params()
+    params.update(vars(args))
+    cut_embeds = {}
+    model = load_model(params)
+    device = torch.device(params.device)
+    print(f"Device: {device}")
+    model.to(params.device)
+    model.eval()
+    # get cutset
+    cutset = CutSet.from_file(args.cut_file)
+    # get embeds
+    batch = []
+    for cut in tqdm(cutset):
+        fbank = cut.load_features()
+        x = torch.tensor(fbank).unsqueeze(0).to(device)
+        x_lens = torch.tensor(x.size(1)).unsqueeze(0).to(device)
+        embed = model.encoder_embed(x, x_lens)[0].squeeze(0).detach().cpu().numpy()
+        cut_embeds[cut.id] = embed
+    # save embeds
+    np.save(params.embed_file, cut_embeds)    
 
 
 if __name__ == "__main__":
-    main()
+    run()
