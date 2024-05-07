@@ -77,12 +77,12 @@ def filter_cuts(cut_set: CutSet, sp: spm.SentencePieceProcessor):
         # an utterance duration distribution for your dataset to select
         # the threshold
         total += 1
-        if c.duration < 0.5 or c.duration > 20.0:
-            logging.warning(
-                f"Exclude cut with ID {c.id} from training. Duration: {c.duration}"
-            )
-            removed += 1
-            return False
+        # if c.duration < 0.5 or c.duration > 20.0:
+        #     logging.warning(
+        #         f"Exclude cut with ID {c.id} from training. Duration: {c.duration}"
+        #     )
+        #     removed += 1
+        #     return False
 
         # In pruned RNN-T, we require that T >= S
         # where T is the number of feature frames after subsampling
@@ -105,12 +105,12 @@ def filter_cuts(cut_set: CutSet, sp: spm.SentencePieceProcessor):
 
         tokens = sp.encode(c.supervisions[0].text, out_type=str)
         # 1 <= token_length <= 400
-        if len(tokens) < 1 or len(tokens) > 400:
-            logging.warning(
-                f"Exclude cut with ID {c.id} from training. Number of tokens: {len(tokens)}"
-            )
-            removed += 1
-            return False
+        # if len(tokens) < 1 or len(tokens) > 400:
+        #     logging.warning(
+        #         f"Exclude cut with ID {c.id} from training. Number of tokens: {len(tokens)}"
+        #     )
+        #     removed += 1
+        #     return False
         # number of subsampling frames should be equal or large than tokens, input lenght should be greater than or equal to output length for CTC
         if T < len(tokens):
             logging.warning(

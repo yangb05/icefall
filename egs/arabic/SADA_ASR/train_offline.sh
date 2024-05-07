@@ -1,12 +1,13 @@
-export CUDA_VISIBLE_DEVICES="4,5,6,7"
+export CUDA_VISIBLE_DEVICES="4,6,7"
 
 ./zipformer/train.py \
-  --world-size 4 \
+  --world-size 3 \
   --use-fp16 1 \
   --exp-dir zipformer/exp_offline \
   --bpe-model data/lang_bpe_10000/bpe.model \
-  --keep-last-k 5 \
+  --keep-last-k 1 \
   --max-duration 1500 \
-  --num-workers 20
+  --num-workers 20 \
+  --master-port 12355
   
   

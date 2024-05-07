@@ -56,13 +56,13 @@ if [ $stage -le 1 ] && [ $stop_stage -ge 1 ]; then
   log "Stage 1: Prepare manifest"
   mkdir -p data/manifests
   if [ ! -e data/manifests/.sada.done ]; then
-    lhotse prepare sada $dl_dir/sada2022 data/manifests -j $nj
+    lhotse prepare sada $dl_dir/sada2022 /mgData4/yangb/data/sada2022/utterances data/manifests -j $nj
     touch data/manifests/.sada.done
   fi
 fi
 
-if [ $stage -le 3 ] && [ $stop_stage -ge 3 ]; then
-  log "Stage 3: Prepare BPE based lang"
+if [ $stage -le 2 ] && [ $stop_stage -ge 2 ]; then
+  log "Stage 2: Prepare BPE based lang"
 
   for vocab_size in ${vocab_sizes[@]}; do
     lang_dir=data/lang_bpe_${vocab_size}
@@ -143,8 +143,8 @@ if [ $stage -le 3 ] && [ $stop_stage -ge 3 ]; then
   done
 fi
 
-if [ $stage -le 4 ] && [ $stop_stage -ge 4 ]; then
-  log "Stage 4: Compute fbank for sada"
+if [ $stage -le 3 ] && [ $stop_stage -ge 3 ]; then
+  log "Stage 3: Compute fbank for sada"
   mkdir -p data/fbank
   # this stage takes 2 hours
   if [ ! -e data/fbank/.sada.done ]; then

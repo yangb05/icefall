@@ -106,7 +106,7 @@ import k2
 import sentencepiece as spm
 import torch
 import torch.nn as nn
-from asr_datamodule import ArabicAsrDataModule
+from asr_datamodule import SadaAsrDataModule
 from beam_search import (
     beam_search,
     fast_beam_search_nbest,
@@ -755,7 +755,7 @@ def save_results(
 @torch.no_grad()
 def main():
     parser = get_parser()
-    ArabicAsrDataModule.add_arguments(parser)
+    SadaAsrDataModule.add_arguments(parser)
     LmScorer.add_arguments(parser)
     args = parser.parse_args()
     args.exp_dir = Path(args.exp_dir)
@@ -1014,11 +1014,11 @@ def main():
 
     # we need cut ids to display recognition results.
     args.return_cuts = True
-    arabic = ArabicAsrDataModule(args)
-    test_cuts = arabic.test_cuts()
-    test_dl = arabic.test_dataloaders(test_cuts)
+    sada = SadaAsrDataModule(args)
+    test_cuts = sada.test_cuts()
+    test_dl = sada.test_dataloaders(test_cuts)
 
-    test_sets = ["mgb2_clean",]
+    test_sets = ["sada_test",]
     test_dl = [test_dl,]
 
     for test_set, test_dl in zip(test_sets, test_dl):

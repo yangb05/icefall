@@ -17,7 +17,7 @@
 
 
 """
-This file computes fbank features of the LibriSpeech dataset.
+This file computes fbank features of the SADA dataset.
 It looks for manifests in the directory data/manifests.
 
 The generated fbank features are saved in data/fbank.
@@ -115,9 +115,9 @@ def compute_fbank_sada(
             supervisions=manifests[partition]["supervisions"],
         )
         if "train" in partition:
+            if bpe_model:
+                cut_set = filter_cuts(cut_set, sp)
             print(cut_set.describe())
-            # if bpe_model:
-            #     cut_set = filter_cuts(cut_set, sp)
             if perturb_speed:
                 logging.info(f"Doing speed perturb")
                 cut_set = (

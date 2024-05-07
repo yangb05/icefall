@@ -52,7 +52,7 @@ class _SeedWorkers:
         fix_random_seed(self.seed + worker_id)
 
 
-class ArabicAsrDataModule:
+class SadaAsrDataModule:
     """
     DataModule for k2 ASR experiments.
     It assumes there is always one train and valid dataloader,
@@ -390,21 +390,21 @@ class ArabicAsrDataModule:
 
     @lru_cache()
     def train_cuts(self) -> CutSet:
-        logging.info("About to get train cuts")
+        logging.info("About to get sada train cuts")
         return load_manifest_lazy(
-            self.args.manifest_dir / "arabic_cuts_train.jsonl.gz"
+            self.args.manifest_dir / "sada_cuts_train.jsonl.gz"
         )
 
     @lru_cache()
     def dev_cuts(self) -> CutSet:
-        logging.info("About to get dev cuts")
+        logging.info("About to get sada dev cuts")
         return load_manifest_lazy(
-            self.args.manifest_dir / "arabic_cuts_dev.jsonl.gz"
+            self.args.manifest_dir / "sada_cuts_valid.jsonl.gz"
         )
 
     @lru_cache()
     def test_cuts(self) -> CutSet:
-        logging.info("About to get test cuts")
+        logging.info("About to get sada test cuts")
         return load_manifest_lazy(
-            self.args.manifest_dir / "arabic_cuts_test.jsonl.gz"
+            self.args.manifest_dir / "sada_cuts_test.jsonl.gz"
         )
