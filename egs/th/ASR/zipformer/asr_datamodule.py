@@ -52,7 +52,7 @@ class _SeedWorkers:
         fix_random_seed(self.seed + worker_id)
 
 
-class VietnameseAsrDataModule:
+class YodasthAsrDataModule:
     """
     DataModule for k2 ASR experiments.
     It assumes there is always one train and valid dataloader,
@@ -399,41 +399,34 @@ class VietnameseAsrDataModule:
 
     @lru_cache()
     def train_cuts(self) -> CutSet:
-        logging.info("Loading yodas_vi_000 no perturb in lazy mode")
-        viet_cuts = load_manifest_lazy(
-            self.args.manifest_dir / "yodas_cuts_vi000_no_perturb.jsonl.gz"
+        logging.info("Loading yodasth in lazy mode")
+        train_cuts = load_manifest_lazy(
+            self.args.manifest_dir / "yodasth_cuts_train.jsonl.gz"
         )
-        if self.args.add_vi000:
-            logging.info("Loading yodas_vi000 in lazy mode")
-            vi000_cuts = load_manifest_lazy(
-            self.args.manifest_dir / "yodas_cuts_vi000.jsonl.gz"
-        )
-            return CutSet.mux(viet_cuts, vi000_cuts, weights=[len(viet_cuts), len(vi000_cuts)])
-        else:
-            return viet_cuts
+        return train_cuts
         
 
     @lru_cache()
     def dev_cuts(self) -> CutSet:
         logging.info("About to get dev cuts")
         return load_manifest_lazy(
-            self.args.manifest_dir / "vietnamese_cuts_dev.jsonl.gz"
+            self.args.manifest_dir / "yodasth_cuts_dev.jsonl.gz"
         )
 
     @lru_cache()
     def test_cuts(self) -> CutSet:
         logging.info("About to get test cuts")
-        giga2_vi = load_manifest_lazy(
-            self.args.manifest_dir / "gigaspeech2-vi_cuts_test.jsonl.gz"
+        giga2_th = load_manifest_lazy(
+            self.args.manifest_dir / "gigaspeech2-th_cuts_test.jsonl.gz"
         )
-        cv_vi = load_manifest_lazy(
-            self.args.manifest_dir / "cv-vi_cuts_test.jsonl.gz"
+        cv_th = load_manifest_lazy(
+            self.args.manifest_dir / "cv-th_cuts_test.jsonl.gz"
         )
-        fleurs_vi = load_manifest_lazy(
-            self.args.manifest_dir / "fleurs-vi_cuts_test.jsonl.gz"
+        fleurs_th = load_manifest_lazy(
+            self.args.manifest_dir / "fleurs-th_cuts_test.jsonl.gz"
         )
         return {
-            "giga2_vi": giga2_vi,
-            "cv_vi": cv_vi,
-            "fleurs_vi": fleurs_vi
+            "giga2_th": giga2_th,
+            "cv_th": cv_th,
+            "fleurs_th": fleurs_th
         }

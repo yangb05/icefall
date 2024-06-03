@@ -106,7 +106,7 @@ import k2
 import sentencepiece as spm
 import torch
 import torch.nn as nn
-from asr_datamodule import VietnameseAsrDataModule
+from asr_datamodule import YodasthAsrDataModule
 from beam_search import (
     beam_search,
     fast_beam_search_nbest,
@@ -729,7 +729,7 @@ def save_results(
         )
         with open(errs_filename, "w") as f:
             wer = write_error_stats(
-                f, f"{test_set_name}-{key}", results, enable_log=True
+                f, f"{test_set_name}-{key}", results, enable_log=True, compute_CER=True
             )
             test_set_wers[key] = wer
 
@@ -755,7 +755,7 @@ def save_results(
 @torch.no_grad()
 def main():
     parser = get_parser()
-    VietnameseAsrDataModule.add_arguments(parser)
+    YodasthAsrDataModule.add_arguments(parser)
     LmScorer.add_arguments(parser)
     args = parser.parse_args()
     args.exp_dir = Path(args.exp_dir)
@@ -1014,12 +1014,11 @@ def main():
 
     # we need cut ids to display recognition results.
     args.return_cuts = True
-    viet = VietnameseAsrDataModule(args)
-    test_cuts = viet.test_cuts()
-    # test_dl = viet.test_dataloaders(test_cuts)
+    yodasth = YodasthAsrDataModule(args)
+    test_cuts = yodasth.test_cuts()
     test_sets = test_cuts.keys()
     test_dls = [
-        viet.test_dataloaders(test_cuts[cuts_name])
+        yodasth.test_dataloaders(test_cuts[cuts_name])
         for cuts_name in test_sets
     ]
 

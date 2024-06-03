@@ -65,7 +65,7 @@ import sentencepiece as spm
 import torch
 import torch.multiprocessing as mp
 import torch.nn as nn
-from asr_datamodule import VietnameseAsrDataModule
+from asr_datamodule import YodasthAsrDataModule
 from decoder import Decoder
 from joiner import Joiner
 from lhotse.cut import Cut
@@ -881,7 +881,6 @@ def train_one_epoch(
     scheduler: LRSchedulerType,
     sp: spm.SentencePieceProcessor,
     train_dl: torch.utils.data.DataLoader,
-    valid_dl: torch.utils.data.DataLoader,
     scaler: GradScaler,
     model_avg: Optional[nn.Module] = None,
     tb_writer: Optional[SummaryWriter] = None,
@@ -1051,24 +1050,24 @@ def train_one_epoch(
                         "train/grad_scale", cur_grad_scale, params.batch_idx_train
                     )
 
-        if batch_idx % params.valid_interval == 0 and not params.print_diagnostics:
-            logging.info("Computing validation loss")
-            valid_info = compute_validation_loss(
-                params=params,
-                model=model,
-                sp=sp,
-                valid_dl=valid_dl,
-                world_size=world_size,
-            )
-            model.train()
-            logging.info(f"Epoch {params.cur_epoch}, validation: {valid_info}")
-            logging.info(
-                f"Maximum memory allocated so far is {torch.cuda.max_memory_allocated()//1000000}MB"
-            )
-            if tb_writer is not None:
-                valid_info.write_summary(
-                    tb_writer, "train/valid_", params.batch_idx_train
-                )
+        # if batch_idx % params.valid_interval == 0 and not params.print_diagnostics:
+        #     logging.info("Computing validation loss")
+        #     valid_info = compute_validation_loss(
+        #         params=params,
+        #         model=model,
+        #         sp=sp,
+        #         valid_dl=valid_dl,
+        #         world_size=world_size,
+        #     )
+        #     model.train()
+        #     logging.info(f"Epoch {params.cur_epoch}, validation: {valid_info}")
+        #     logging.info(
+        #         f"Maximum memory allocated so far is {torch.cuda.max_memory_allocated()//1000000}MB"
+        #     )
+        #     if tb_writer is not None:
+        #         valid_info.write_summary(
+        #             tb_writer, "train/valid_", params.batch_idx_train
+        #         )
 
     loss_value = tot_loss["loss"] / tot_loss["frames"]
     params.train_loss = loss_value
@@ -1172,9 +1171,9 @@ def run(rank, world_size, args):
     if params.inf_check:
         register_inf_check_hooks(model)
 
-    viet = VietnameseAsrDataModule(args)
+    yodasth = YodasthAsrDataModule(args)
 
-    train_cuts = viet.train_cuts()
+    train_cuts = yodasth.train_cuts()
 
     def remove_short_and_long_utt(c: Cut):
         # Keep only utterances with duration between 1 second and 20 seconds
@@ -1222,12 +1221,12 @@ def run(rank, world_size, args):
     else:
         sampler_state_dict = None
 
-    train_dl = viet.train_dataloaders(
+    train_dl = yodasth.train_dataloaders(
         train_cuts, sampler_state_dict=sampler_state_dict
     )
 
-    valid_cuts = viet.dev_cuts()
-    valid_dl = viet.valid_dataloaders(valid_cuts)
+    # valid_cuts = viet.dev_cuts()
+    # valid_dl = viet.valid_dataloaders(valid_cuts)
 
     # if not params.print_diagnostics:
     #     scan_pessimistic_batches_for_oom(
@@ -1261,7 +1260,6 @@ def run(rank, world_size, args):
             scheduler=scheduler,
             sp=sp,
             train_dl=train_dl,
-            valid_dl=valid_dl,
             scaler=scaler,
             tb_writer=tb_writer,
             world_size=world_size,
@@ -1366,7 +1364,7 @@ def scan_pessimistic_batches_for_oom(
 
 def main():
     parser = get_parser()
-    VietnameseAsrDataModule.add_arguments(parser)
+    YodasthAsrDataModule.add_arguments(parser)
     args = parser.parse_args()
     args.exp_dir = Path(args.exp_dir)
 

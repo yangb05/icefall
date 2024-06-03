@@ -58,7 +58,7 @@ def get_args():
     parser.add_argument(
         "--perturb-speed",
         type=str2bool,
-        default=True,
+        default=False,
         help="""Perturb speed with factor 0.9 and 1.1 on train subset.""",
     )
 
@@ -69,13 +69,13 @@ def compute_fbank_vietnamese(
     bpe_model: Optional[str] = None,
     perturb_speed: Optional[bool] = True,
 ):
-    src_dir = Path("/mgData2/yangb/evaluate/viet_test_25h/data/manifests")
-    output_dir = Path("/mgData2/yangb/evaluate/viet_test_25h/data/fbank")
+    src_dir = Path("data/manifests")
+    output_dir = Path("data/fbank")
     # number of workers in dataloader
     num_workers = 20
     # number of seconds in a batch
     batch_duration = 600
-    subsets = ("valid",)
+    subsets = ("train",)
     if bpe_model:
         logging.info(f"Loading {bpe_model}")
         sp = spm.SentencePieceProcessor()
@@ -88,7 +88,7 @@ def compute_fbank_vietnamese(
 
     logging.info(f"device: {device}")
     logging.info("Loading manifest")
-    prefix = "vietnamese"
+    prefix = "yodasth"
     suffix = "jsonl.gz"
     manifests = read_manifests_if_cached(
         dataset_parts=subsets,

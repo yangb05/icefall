@@ -65,17 +65,17 @@ def get_args():
     return parser.parse_args()
 
 
-def compute_fbank_vietnamese(
+def compute_fbank_yodas_vi000(
     bpe_model: Optional[str] = None,
     perturb_speed: Optional[bool] = True,
 ):
-    src_dir = Path("/mgData2/yangb/evaluate/viet_test_25h/data/manifests")
-    output_dir = Path("/mgData2/yangb/evaluate/viet_test_25h/data/fbank")
+    src_dir = Path("/data_a100/userhome/yangb/data/yodas/manifests")
+    output_dir = Path("/data_a100/userhome/yangb/data/yodas/fbank")
     # number of workers in dataloader
     num_workers = 20
     # number of seconds in a batch
     batch_duration = 600
-    subsets = ("valid",)
+    subsets = ("vi000",)
     if bpe_model:
         logging.info(f"Loading {bpe_model}")
         sp = spm.SentencePieceProcessor()
@@ -88,7 +88,7 @@ def compute_fbank_vietnamese(
 
     logging.info(f"device: {device}")
     logging.info("Loading manifest")
-    prefix = "vietnamese"
+    prefix = "yodas"
     suffix = "jsonl.gz"
     manifests = read_manifests_if_cached(
         dataset_parts=subsets,
@@ -114,21 +114,16 @@ def compute_fbank_vietnamese(
             recordings=manifests[partition]["recordings"],
             supervisions=manifests[partition]["supervisions"],
         )
-        # extract 284h from 2277h data
-        # shuffled = cut_set.shuffle()
-        # cut_set = shuffled.split(num_splits=8)[0]
-        
-        if "train" in partition:
-            print(cut_set.describe())
-            if bpe_model:
-                cut_set = filter_cuts(cut_set, sp)
-            if perturb_speed:
-                logging.info(f"Doing speed perturb")
-                cut_set = (
-                    cut_set
-                    + cut_set.perturb_speed(0.9)
-                    + cut_set.perturb_speed(1.1)
-                )
+        print(cut_set.describe())
+        if bpe_model:
+            cut_set = filter_cuts(cut_set, sp)
+        if perturb_speed:
+            logging.info(f"Doing speed perturb")
+            cut_set = (
+                cut_set
+                + cut_set.perturb_speed(0.9)
+                + cut_set.perturb_speed(1.1)
+            )
         logging.info(f"Computing features for {partition}")
         cut_set = cut_set.compute_and_store_features_batch(
             extractor=extractor,
@@ -147,7 +142,7 @@ if __name__ == "__main__":
     logging.basicConfig(format=formatter, level=logging.INFO)
     args = get_args()
     logging.info(vars(args))
-    compute_fbank_vietnamese(
+    compute_fbank_yodas_vi000(
         bpe_model=args.bpe_model,
         perturb_speed=args.perturb_speed
     )
